@@ -1,10 +1,12 @@
 import yt_dlp
+from pathlib import Path
 
+download_folder = Path.home() / "Downloads"
 
 def download_audio(url):
     options = {
         "format": "bestaudio/best",
-        "outtmpl": "downloads/%(title)s.%(ext)s",
+        "outtmpl": str(download_folder / "%(title)s.%(ext)s"),
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
