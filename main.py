@@ -3,12 +3,10 @@ import os
 from pathlib import Path
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, ID3NoHeaderError
 
-download_folder = os.path.expanduser("~/Downloads")
-
 if "com.termux" in os.environ.get("PREFIX", ""):
-    download_folder = os.path.expanduser("~/storage/downloads")
+    download_folder = Path.home() / "storage" / "downloads"
 else:
-    download_folder = os.path.expanduser("~/Downloads")
+    download_folder = Path.home() / "Downloads"
 
 def add_metadata(file_path, title, artist, album):
     try:
