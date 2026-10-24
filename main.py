@@ -4,9 +4,12 @@ from pathlib import Path
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, ID3NoHeaderError
 
 if "com.termux" in os.environ.get("PREFIX", ""):
-    download_folder = Path.home() / "storage" / "downloads"
+    download_folder = Path("/storage/emulated/0/Download")
+    if not download_folder.exists():
+        raise SystemExit("Storage not accessible. Run: termux-setup-storage")
 else:
     download_folder = Path.home() / "Downloads"
+    
 
 def add_metadata(file_path, title, artist, album):
     try:
