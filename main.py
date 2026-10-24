@@ -1,8 +1,9 @@
 import yt_dlp
+import os
 from pathlib import Path
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, ID3NoHeaderError
 
-download_folder = Path.home() / "Downloads"
+download_folder = os.path.expanduser("~/storage/downloads")
 
 def add_metadata(file_path, title, artist, album):
     try:
