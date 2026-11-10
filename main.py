@@ -1,11 +1,15 @@
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
 import yt_dlp
+from yt_dlp.utils import DownloadError
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, ID3NoHeaderError
 
 IS_TERMUX = "com.termux" in os.environ.get("PREFIX", "")
+
+COOKIES_FILE = Path(__file__).resolve().parent / "cookies.txt"
 
 if IS_TERMUX:
     download_folder = Path("/storage/emulated/0/Download")
@@ -14,6 +18,10 @@ if IS_TERMUX:
 else:
     download_folder = Path.home() / "Downloads"
     download_folder.mkdir(parents=True, exist_ok=True)
+
+if not shutil.which("ffmpeg"):
+    hint = "pkg install ffmpeg" if IS_TERMUX else "sudo apt install ffmpeg"
+    raise SystemExit(f"ffmpeg not found. Install it with: {hint}")
 
 
 def add_metadata(file_path, title, artist, album):
@@ -44,6 +52,7 @@ def download_audio(url):
         "format": "bestaudio/best",
         "outtmpl": str(download_folder / "%(title)s.%(ext)s"),
         "writethumbnail": True,
+        "noplaylist": True,
         "postprocessors": [
             {"key": "FFmpegExtractAudio", "preferredcodec": "mp3", "preferredquality": "192"},
             {"key": "FFmpegThumbnailsConvertor", "format": "jpg", "when": "before_dl"},
@@ -51,6 +60,12 @@ def download_audio(url):
             {"key": "EmbedThumbnail"},
         ],
     }
+
+    if not shutil.which("deno") and shutil.which("node"):
+        options["js_runtimes"] = {"node": {}}
+
+    if COOKIES_FILE.exists():
+        options["cookiefile"] = str(COOKIES_FILE)
 
     with yt_dlp.YoutubeDL(options) as downloader:
         info = downloader.extract_info(url, download=True)
@@ -76,6 +91,15 @@ def main():
         print("Download complete!")
         print("Saved to:", mp3_path)
 
+    except DownloadError as error:
+        message = str(error)
+        print(f"Download failed: {message}")
+        if "not a bot" in message or "429" in message:
+            print("\nYouTube is blocking the request. Try:")
+            print("  1. pip install -U --pre 'yt-dlp[default]'")
+            print("  2. Install a JS runtime (Termux: pkg install nodejs)")
+            print(f"  3. Export your YouTube cookies to: {COOKIES_FILE}")
+            print("  4. Switch networks (Wi-Fi <-> mobile data) or wait a bit")
     except Exception as error:
         print(f"Something went wrong: {error}")
 
